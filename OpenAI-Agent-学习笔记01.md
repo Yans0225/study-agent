@@ -1,7 +1,7 @@
 # OpenAI Agent 学习笔记(概念篇)
 
 > 本文档系统梳理了「系统性学习 Agent」第一阶段的全部概念,来源为 OpenAI 官方文档(Agents SDK 中文版)与对话中逐步澄清的心智模型。
-> 学习日期:2026-09-24 起 · 学习者:陈朝辉
+> 学习日期:2026-09-24 起 · 
 
 ---
 
@@ -15,7 +15,7 @@
 6. [Responses API 是什么](#六responses-api-是什么)
 7. [一次完整提问的流转过程](#七一次完整提问的流转过程)
 8. [一轮循环的精确定义](#八一抡循环的精确定义)
-9. [多 Agent 设计模式与工具、任务转移](#九多-agent-设计模式与工具任务转移)
+9. [多 Agent 设计模式](#九多-agent-设计模式)
 10. [问答记录(Q&A)](#十问答记录qa)
 
 ---
@@ -86,6 +86,22 @@ result = await Runner.run(agent, "北京天气怎么样?")
 | 适用 | 想要完全控制循环细节 | 想省事专注业务 |
 
 **Agent 的本质价值 = 编排(orchestration)**,即自动管理"轮次、工具、护栏、交接、会话"。
+
+### 三个字段各自的作用(name / instructions / tools)
+
+`Agent` 的三个核心字段是有"分层"的,在运行阶段的命运不同:
+
+| 要素 | 定义阶段 | 运行阶段(Runner 执行时) |
+|---|---|---|
+| **name** | 一句标识 | ❌ 不喂给模型(仅做标识/日志/交接工具名) |
+| **instructions** | 一段静态文字 | ✅ 每次都带,作为 system 提示词喂给模型 |
+| **tools** | 一个函数列表 | ✅ 每次都带(带"描述 schema",不是函数本身) |
+
+- **name(给人看的)**:模型并不知道自己叫什么,除非你在 instructions 里又写了一遍。唯一例外:交接(handoff)时 name 会自动变成交接工具名 `transfer_to_<名字>`。
+- **instructions(给模型看的)**:每次 Responses API 调用时作为 **system prompt** 放在消息最前,定"人设 + 规矩",是 agent 行为的"宪法"。
+- **tools(给模型 + Runner 看的)**:带进去的是工具的 **JSON schema**(名称/参数/说明),模型据此"点单";函数本体始终留在本地,由 Runner 执行,模型看不到真实代码。
+
+> 分层一句话:`name` 给「人」看(标识/日志/调试/交接命名)、`instructions` 给「模型」看(系统提示词)、`tools` 给「模型 + Runner」看(模型看"能调什么",Runner 看"怎么执行")。
 
 ---
 
@@ -244,7 +260,7 @@ Responses API 只负责"和模型对话、拿信号",**不负责执行工具、�
 
 ---
 
-## 九、多 Agent 设计模式与工具、任务转移
+## 九、多 Agent 设计模式
 
 ### 两种多 Agent 模式(最重要的心智模型)
 
@@ -253,16 +269,7 @@ Responses API 只负责"和模型对话、拿信号",**不负责执行工具、�
 
 > 一句话记法:"管理器"是"我调用你";"交接"是"我把活儿整个交给你"。这是设计多 agent 系统时最核心的架构选择。
 
-### 工具(Tools)五类
-
-新手先记最常用的两类:
-- **FunctionTool**:把 Python 函数包装成工具(标 `@tool` 装饰器),90% 场景的基础;
-- **托管工具**:OpenAI 服务器端现成能力——WebSearchTool(联网)、FileSearchTool(查知识库)、CodeInterpreterTool(沙盒跑代码)等。
-
-### 任务转移(handoffs)的两个能力
-
-- **结构化元数据(`input_type`)**:交接时让模型顺便给"原因/优先级",如 `{"reason":"duplicate_charge","priority":"high"}`;
-- **输入过滤器(`input_filter`)**:交接时新 agent 默认看得到全部历史,可过滤掉工具调用记录等。
+> 工具(Tools)的类型、任务转移(handoffs)的进阶能力(`input_type`、`input_filter`)尚未学习,后续补充。
 
 ---
 
@@ -283,4 +290,4 @@ Responses API 只负责"和模型对话、拿信号",**不负责执行工具、�
 
 ---
 
-*本文档将持续补充:下一步待学 guardrails(护栏)、tracing(追踪)、context/sessions(上下文与会话)。*
+*本文档将持续补充:下一步待学 tools(工具)、handoffs 进阶(任务转移)、guardrails(护栏)、tracing(追踪)、context/sessions(上下文与会话)。*
