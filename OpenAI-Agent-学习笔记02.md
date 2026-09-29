@@ -11,7 +11,7 @@
 1. [官方文档来源](#一官方文档来源)
 2. [基本配置完整字段总览（16 个）](#二基本配置完整字段总览16-个)
 3. [字段分组详解](#三字段分组详解)
-4. [易混概念辨析（5 组对比）](#四易混概念辨析5-组对比)
+4. [易混概念辨析（6 组对比）](#四易混概念辨析6-组对比)
 5. [问答记录（Q&A）](#五问答记录qa)
 
 ---
@@ -237,7 +237,7 @@ agent = Agent(name="Calendar extractor",
 
 ---
 
-## 四、易混概念辨析（5 组对比）
+## 四、易混概念辨析（6 组对比）
 
 ### ① `instructions` vs `prompt`
 
@@ -276,6 +276,40 @@ agent = Agent(name="Calendar extractor",
 
 见上「观察相关」部分。
 
+### ⑥ context 一词的三重含义（同名异义，最易混）
+
+「context」这个词在 Agent 语境下至少有三个完全不同的意思，方向上甚至相反：
+
+| 叫法 | 指的是什么 | 是否喂给模型 |
+|---|---|---|
+| 对话历史 / messages（日常说的「上下文」） | 用户问了什么 + 模型说了什么 + 工具调用记录 | ✅ 每轮都喂 |
+| Agents SDK 的 `context` 参数 | 你自己塞进去的业务对象（用户身份/配置），跟随整次 run 传播 | ❌ 不喂，只给代码看 |
+| 上下文窗口 context window | 模型能吞下的最大 token 量 | 是「容量上限」，不是喂的内容 |
+
+**关键澄清：**
+
+- 「压缩上下文」（例如 `/compact`）压缩的是 **messages（对话历史）**，不是 SDK 的 `context` 参数。
+- 会滚雪球越变越长的只有 messages，所以需要压缩；SDK 的 `context` 参数只是几个字段的小便签，固定不变，无需也无法压缩。
+
+**为什么这么容易混：** 中文日常说的「上下文」默认就是指「对话历史 / 前文」；而 SDK 却在代码里把 `context` 这个名字用给了「用户自定义对象」。同名不同义，方向相反——一个指「对话内容」，一个指「后台业务数据」。
+
+**SDK `context` 的工作方式（两层结构）：**
+
+```python
+class UserContext:
+    name: str
+    user_id: str
+
+result = await Runner.run(
+    agent, "帮我看天气",
+    context=UserContext(name="张三", user_id=42),   # ← 塞进去
+)
+```
+
+塞进去后，这个对象会跟随整次 run 传到各环节，供你的代码读取——动态指令函数、工具函数（`ctx.context`）、护栏、hooks。第一层是 SDK 发来的包装盒 `RunContextWrapper`（含 `context` / `usage` / 当前 agent），第二层 `wrapper.context` 才是你塞进去的对象——这正是上文动态指令例子里 `context.context.name` 两层写法的由来。
+
+> 一句话：会「压缩」的永远是「对话历史 messages」；SDK 里叫 `context` 的参数，是占了同一个词的「业务便签」，跟压缩无关。
+
 ---
 
 ## 五、问答记录（Q&A）
@@ -298,6 +332,7 @@ agent = Agent(name="Calendar extractor",
 | 14 | `hooks` 是什么 | 生命周期回调，观察 agent 每一步，只记录不改结果 |
 | 15 | `tool_use_behavior` 是什么 | 工具调用后是否喂回模型继续循环 |
 | 16 | `reset_tool_choice` 是什么 | 工具调用后自动重置 tool_choice 防死循环，默认 True |
+| 17 | 「压缩 context」压缩的是什么？SDK 的 context 是不是对话历史 | 压缩的是 messages（对话历史/前文），不是 SDK 的 `context` 参数；后者是你塞的业务对象（用户身份/配置），不喂模型、无需压缩。二者同名异义 |
 
 ---
 
