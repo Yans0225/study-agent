@@ -661,4 +661,4 @@ Python 哲学「一切皆对象」——对象是**统称**，字典只是其中
 
 *工具篇（FunctionTool / 超时报错 / 托管工具 / agents as tools）已学完。*
 
-*遗留待办：① 笔记 02 的旧「工具四来源」表是旧版，需更新为本文档「五类工具」分类。② 下一步待学（衔接主题）：handoffs 进阶、guardrails、models、context/sessions、running_agents、results、tracing。*
+*遗留待办：① 下一步待学（衔接主题）：handoffs 进阶、guardrails、models、context/sessions、running_agents、results、tracing。*
