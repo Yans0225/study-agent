@@ -2,7 +2,7 @@
 
 > 本文档是「系统性学习 Agent」第二阶段的概念整理，聚焦 **`Agent` 类完整的基本配置属性**。
 > 来源：OpenAI Agents SDK 官方中文文档「智能体」页（agents.md），配合对话逐层澄清。
-> 学习日期：2026-09-29 
+> 学习日期：2026-09-29
 
 ---
 
@@ -23,7 +23,7 @@
 | 智能体 agents | https://openai.github.io/openai-agents-python/zh/agents/ | https://raw.githubusercontent.com/openai/openai-agents-python/main/docs/zh/agents.md |
 
 > 源码 Markdown 可经 `raw.githubusercontent.com` 直连获取；本文档的字段清单据此逐条核对。
-> 相关相邻指南（后续待学）：tools、handoffs、guardrails、models、context、running_agents、results、multi_agent。
+> 相关相邻指南（后续待学）：handoffs 进阶、guardrails、models、context、running_agents、results、multi_agent。（tools 已学完，见笔记 03）
 
 ---
 
@@ -113,16 +113,21 @@
 
 在深入这几个字段前，先补一张背景图：**工具从哪里来**，以及**到底需要几个 agent**。
 
-**工具的四种来源（谁写的工具）：**
+**工具的五个类别（官方最新分类）：**
 
-| 来源 | 谁写的 | 一句话说明 |
+> ⚠️ 本表是学完笔记 03（工具篇）后更新的最新分类，替换早先的「工具四来源」旧表。
+
+| # | 类别 | 一句话 |
 |---|---|---|
-| 手写工具（FunctionTool） | 你自己 | 写个普通 Python 函数，包一层就变成工具 |
-| 托管工具（Hosted Tools） | OpenAI 现成 | 联网搜索、文件检索、跑代码等，不用自己写 |
-| MCP 工具 | 第三方/社区 | 通过 MCP 协议接第三方工具（数据库、各种服务） |
-| Agent 当工具 | 复用已搭好的 agent | 把一个专业 agent 整体包装成另一个 agent 的工具 |
+| 1 | 托管工具（Hosted Tools） | OpenAI 服务器上替你跑（联网搜索、文件检索、代码解释、图像生成等） |
+| 2 | 本地 / 运行时工具 | `ComputerTool` / `ApplyPatchTool` / `ShellTool`，在你自己的环境跑 |
+| 3 | `FunctionTool` 实例 | 把任意 Python 函数包装成工具 |
+| 4 | Agents as tools | 把一个 agent 暴露成可调用工具 |
+| 5 | 实验性 Codex 工具 | 通过工具调用跑一个限定在工作区的 Codex 任务 |
 
-> 这张表正是理解下面 `tools` vs `mcp_servers` 的钥匙：`tools` 字段能装手写/托管/agent 工具，`mcp_servers` 字段则对应「MCP 工具」这一来源。
+**变化的本质**：旧「四来源」表把「MCP 工具」单独算一类；新版把 MCP 拆散了——托管 MCP 归进「托管工具」，本地 MCP 归进「运行时工具」，不再单列。同时补上了 `ComputerTool`/`ShellTool` 这类能操作电脑/改文件的强操作工具，以及实验性的 Codex。
+
+> 这张表也是理解下面 `tools` vs `mcp_servers` 的钥匙：`tools` 字段能直接装 FunctionTool / 托管工具 / agent 工具；`mcp_servers` 字段则通过连 MCP 服务器，把第三方暴露的一批工具自动挂载进来（MCP 不再单列一类，而是拆进「托管 MCP」与「本地 MCP」）。
 
 **需要几个 agent？——官方哲学：能少则少。**
 
@@ -336,4 +341,4 @@ result = await Runner.run(
 
 ---
 
-*本文档将持续补充。下一步待学：tools（工具）、handoffs 进阶、guardrails、tracing、context/sessions、running_agents、results。*
+*本文档将持续补充。下一步待学：handoffs 进阶、guardrails、tracing、context/sessions、running_agents、results。（tools 已学完，见笔记 03）*
